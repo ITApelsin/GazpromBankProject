@@ -1,0 +1,11 @@
+#RewriteRule ^.*$ /index.php [L,QSA]
+
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^.*/$ /index.php [L,QSA]
+
+Options -Indexes
+
+ErrorDocument 403 /errors/403.php
+ErrorDocument 404 /errors/404.php
