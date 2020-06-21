@@ -1,4 +1,7 @@
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 
 plugins {
 	id("org.springframework.boot") version "2.4.0-SNAPSHOT"
@@ -6,6 +9,7 @@ plugins {
 	kotlin("jvm") version "1.3.72"
 	kotlin("plugin.spring") version "1.3.72"
 	kotlin("plugin.jpa") version "1.3.72"
+	id("com.bmuschko.docker-remote-api") version "6.4.0"
 }
 
 group = "ru.itapelsin"
@@ -16,9 +20,11 @@ configurations {
 	compileOnly {
 		extendsFrom(configurations.annotationProcessor.get())
 	}
+
 }
 
 repositories {
+	jcenter()
 	mavenCentral()
 	maven { url = uri("https://repo.spring.io/milestone") }
 	maven { url = uri("https://repo.spring.io/snapshot") }
@@ -56,5 +62,49 @@ tasks.withType<KotlinCompile> {
 	kotlinOptions {
 		freeCompilerArgs = listOf("-Xjsr305=strict")
 		jvmTarget = "1.8"
+	}
+}
+
+docker {
+	url.set("tcp://192.168.99.100:2376")
+}
+
+tasks {
+
+	val imageName = "itapelsin/gbp"
+
+	compileJava {
+		options.encoding = "UTF-8"
+	}
+
+	val dockerBuildDir = "${buildDir.path}/docker"
+
+	val createDockerfile by creating(Dockerfile::class) {
+		group = "docker"
+
+		from("openjdk:8-jdk-alpine")
+		addFile(bootJar.get().archiveFileName.get(), "/usr/local/gbp.jar")
+		exposePort(8080)
+		defaultCommand("java", "-jar", "/usr/local/gbp.jar")
+	}
+
+	val syncApp by creating(Copy::class) {
+		group = "docker"
+		dependsOn(assemble.get())
+		from(bootJar.get().archiveFile.get().asFile.path)
+		into(dockerBuildDir)
+	}
+
+	val buildImage by creating(com.bmuschko.gradle.docker.tasks.image.DockerBuildImage::class) {
+		group = "docker"
+		dependsOn(createDockerfile, syncApp)
+		images.add(imageName)
+	}
+
+
+	val pushImage by creating(DockerPushImage::class) {
+		group = "docker"
+		dependsOn(buildImage)
+		images.add(imageName)
 	}
 }

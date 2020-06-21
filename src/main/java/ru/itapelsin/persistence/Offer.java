@@ -13,11 +13,17 @@ import java.util.List;
 @Setter
 @NamedQueries({
         @NamedQuery(name = Offer.FIND_BY_CATEGORY,
-            query = "SELECT o FROM Offer o WHERE o.category in :category ORDER BY o.created DESC")
+            query = "SELECT o FROM Offer o WHERE o.category in :category ORDER BY o.created DESC"),
+        @NamedQuery(name = Offer.FIND_BY_AUTHOR,
+                query = "SELECT o FROM Offer o WHERE o.author = :author ORDER BY o.created DESC"),
+        @NamedQuery(name = Offer.TOP,
+                query = "SELECT o FROM Offer o ORDER BY (o.likes - o.dislikes) DESC")
 })
 public class Offer extends AbstractEntity {
 
     public static final String FIND_BY_CATEGORY = "Offer.findByCategory";
+    public static final String FIND_BY_AUTHOR = "Offer.findByAuthor";
+    public static final String TOP = "Offer.top";
 
     @ManyToOne(optional = false)
     private Account author;
@@ -35,8 +41,9 @@ public class Offer extends AbstractEntity {
     private Instant created;
 
     @OneToMany(mappedBy = "offer")
-    private final List<Rate> rateList = new ArrayList<>();
-
-    @OneToMany(mappedBy = "offer")
     private final List<Comment> comments = new ArrayList<>();
+
+    private int likes = 0;
+
+    private int dislikes = 0;
 }

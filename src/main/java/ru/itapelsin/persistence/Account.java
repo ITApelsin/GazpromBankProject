@@ -3,8 +3,9 @@ package ru.itapelsin.persistence;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 @Entity
 @Getter
@@ -24,8 +25,5 @@ public class Account extends AbstractEntity {
 
     private String password;
 
-    @Nullable
-    @OneToOne
-    @JoinColumn(unique = true)
-    private Image icon;
+    private byte[] icon;
 }
